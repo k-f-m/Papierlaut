@@ -8,6 +8,10 @@ word highlighted as the voice moves through the text.
 and no telemetry. Speech is synthesised in the tab, by a neural model that ships
 with the container.
 
+![The app waiting for a document, with the Offline badge in the header, the
+keyboard shortcuts listed below the drop zone, and the playback toolbar showing
+a local neural voice](docs/screenshot.png)
+
 ---
 
 ## Run it

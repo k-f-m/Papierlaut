@@ -1,0 +1,67 @@
+name: papierlaut
+
+# Every service runs entirely inside Docker: no toolchain, no node_modules and
+# no voice models are ever written to the host. Named volumes hold everything
+# generated, so the working copy stays exactly as checked out.
+
+services:
+  # Production build behind nginx, with the security headers that make the
+  # offline guarantee enforceable. This is the one you want day to day.
+  app:
+    build:
+      context: .
+      target: runtime
+      args:
+        # Comma-separated ids from voices.catalog.json. Each medium-quality
+        # model is roughly 63 MB. Set to "" to build without neural voices and
+        # rely on the operating system's own.
+        PIPER_VOICES: ${PIPER_VOICES-de_DE-thorsten-medium,en_US-lessac-medium}
+    ports:
+      - '${PORT:-8080}:8080'
+    restart: unless-stopped
+
+  # Vite with hot reload. Voice models live in a named volume so restarting the
+  # container does not re-download them.
+  dev:
+    profiles: ['dev']
+    build:
+      context: .
+      target: deps
+    working_dir: /app
+    command: sh -c "npm run assets && npm run dev -- --host 0.0.0.0"
+    environment:
+      PIPER_VOICES: ${PIPER_VOICES-de_DE-thorsten-medium,en_US-lessac-medium}
+    ports:
+      - '${DEV_PORT:-5173}:5173'
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - tts_assets:/app/public/tts
+
+  # One-shot: `docker compose run --rm test`
+  test:
+    profiles: ['ci']
+    build:
+      context: .
+      target: deps
+    working_dir: /app
+    command: npm run test
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+  # One-shot: `docker compose run --rm typecheck`
+  typecheck:
+    profiles: ['ci']
+    build:
+      context: .
+      target: deps
+    working_dir: /app
+    command: npm run typecheck
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+volumes:
+  node_modules:
+  tts_assets:

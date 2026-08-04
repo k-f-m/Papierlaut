@@ -1,0 +1,72 @@
+{
+  "$comment": "Single source of truth for the bundled Piper voices. scripts/fetch-voices.mjs downloads them to public/tts/voices/<path>, and src/speech/piperSynthesizer.ts loads them from there. `path` mirrors the upstream repository layout.",
+  "defaultSelection": [
+    "de_DE-thorsten-medium",
+    "en_US-lessac-medium"
+  ],
+  "voices": [
+    {
+      "id": "de_DE-thorsten-medium",
+      "label": "Thorsten",
+      "lang": "de-DE",
+      "language": "de",
+      "quality": "medium",
+      "note": "Warm male German voice, the reference Piper model for de-DE.",
+      "path": "de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx"
+    },
+    {
+      "id": "de_DE-kerstin-low",
+      "label": "Kerstin",
+      "lang": "de-DE",
+      "language": "de",
+      "quality": "low",
+      "note": "Female German voice, lighter and faster to synthesise.",
+      "path": "de/de_DE/kerstin/low/de_DE-kerstin-low.onnx"
+    },
+    {
+      "id": "de_DE-eva_k-x_low",
+      "label": "Eva",
+      "lang": "de-DE",
+      "language": "de",
+      "quality": "x_low",
+      "note": "Compact female German voice.",
+      "path": "de/de_DE/eva_k/x_low/de_DE-eva_k-x_low.onnx"
+    },
+    {
+      "id": "en_US-lessac-medium",
+      "label": "Lessac",
+      "lang": "en-US",
+      "language": "en",
+      "quality": "medium",
+      "note": "Clear female US English voice, very steady for long documents.",
+      "path": "en/en_US/lessac/medium/en_US-lessac-medium.onnx"
+    },
+    {
+      "id": "en_US-ryan-medium",
+      "label": "Ryan",
+      "lang": "en-US",
+      "language": "en",
+      "quality": "medium",
+      "note": "Male US English voice.",
+      "path": "en/en_US/ryan/medium/en_US-ryan-medium.onnx"
+    },
+    {
+      "id": "en_GB-alan-medium",
+      "label": "Alan",
+      "lang": "en-GB",
+      "language": "en",
+      "quality": "medium",
+      "note": "Male British English voice.",
+      "path": "en/en_GB/alan/medium/en_GB-alan-medium.onnx"
+    },
+    {
+      "id": "en_GB-cori-high",
+      "label": "Cori",
+      "lang": "en-GB",
+      "language": "en",
+      "quality": "high",
+      "note": "Female British English voice, highest quality tier.",
+      "path": "en/en_GB/cori/high/en_GB-cori-high.onnx"
+    }
+  ]
+}

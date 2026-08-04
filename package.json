@@ -1,0 +1,35 @@
+{
+  "name": "papierlaut",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline, in-browser document reader with natural German and English voices",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "assets:runtime": "node scripts/collect-runtime-assets.mjs",
+    "assets:voices": "node scripts/fetch-voices.mjs",
+    "assets": "npm run assets:runtime && npm run assets:voices",
+    "dev": "vite",
+    "build": "npm run assets:runtime && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.13",
+    "mammoth": "^1.12.0",
+    "marked": "^18.0.7",
+    "onnxruntime-web": "1.18.0"
+  },
+  "devDependencies": {
+    "@diffusionstudio/piper-wasm": "1.0.0",
+    "jsdom": "^30.0.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}

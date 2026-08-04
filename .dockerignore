@@ -1,0 +1,12 @@
+node_modules
+dist
+public/tts
+.git
+.gitignore
+.vscode
+.idea
+*.log
+npm-debug.log*
+coverage
+.DS_Store
+Thumbs.db

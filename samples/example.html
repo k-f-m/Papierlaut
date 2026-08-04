@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>A sample HTML document</title>
+  </head>
+  <body>
+    <nav>Navigation and other page furniture is stripped before reading.</nav>
+
+    <main>
+      <h1>Reading HTML aloud</h1>
+
+      <p>
+        This file exists to exercise the HTML path. The parser keeps the
+        readable body, drops navigation, headers and footers, and then hands
+        the markup to the sanitiser before anything reaches the page.
+      </p>
+
+      <h2>Inline elements</h2>
+
+      <p>
+        A sentence can contain <strong>bold</strong> and <em>italic</em> runs, and
+        even a word broken across tags such as <b>Vor</b>leser. The highlight
+        follows the word regardless, because a word is allowed to be rendered as
+        more than one span.
+      </p>
+
+      <h2>Lists and tables</h2>
+
+      <ul>
+        <li>Each list item is read as its own paragraph.</li>
+        <li>So is each table cell.</li>
+      </ul>
+
+      <table>
+        <thead>
+          <tr><th>Format</th><th>Extension</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Word</td><td>.docx</td></tr>
+          <tr><td>Markdown</td><td>.md</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Things that must not survive</h2>
+
+      <p>
+        This page deliberately contains a
+        <a href="https://example.com">link</a>, a remote image
+        <img src="https://example.com/pixel.gif" alt="tracking pixel" />
+        and a script. None of them may cause a network request once opened in
+        the reader.
+      </p>
+
+      <script>
+        document.title = 'this must never run';
+      </script>
+    </main>
+
+    <footer>Footers are stripped too.</footer>
+  </body>
+</html>

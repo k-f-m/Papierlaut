@@ -1,0 +1,29 @@
+{
+  "$comment": "Single source of truth for the bundled translation models. scripts/fetch-translation-models.mjs downloads them to public/mt/<pair id>/, and src/translation/bergamotTranslator.ts loads them from there. Models are Mozilla's Firefox Translations models, served from the same Remote Settings CDN Firefox itself uses; every record carries a sha256 the fetch verifies. Versions are pinned so a rebuild produces the same image.",
+  "defaultSelection": [
+    "de-en",
+    "en-de"
+  ],
+  "source": {
+    "records": "https://firefox.settings.services.mozilla.com/v1/buckets/main/collections/translations-models/records",
+    "attachments": "https://firefox-settings-attachments.cdn.mozilla.net/"
+  },
+  "pairs": [
+    {
+      "id": "de-en",
+      "from": "de",
+      "to": "en",
+      "label": "German → English",
+      "version": "2.0",
+      "note": "base architecture, BLEU 41.6 on FLORES. About 36 MB."
+    },
+    {
+      "id": "en-de",
+      "from": "en",
+      "to": "de",
+      "label": "English → German",
+      "version": "2.1",
+      "note": "About 35 MB."
+    }
+  ]
+}

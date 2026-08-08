@@ -6,6 +6,7 @@
  *
  *   public/tts/onnx/    ONNX Runtime Web binaries  (ort.env.wasm.wasmPaths)
  *   public/tts/piper/   espeak-ng phonemizer       (piper_phonemize.*)
+ *   public/assets/      Bergamot translator runtime (see below)
  *
  * Runs inside the container on every build; it is cheap and idempotent.
  */
@@ -27,6 +28,18 @@ const ONNX_INCLUDE = [/\.wasm$/, /\.worker\.js$/, /^ort-wasm.*\.mjs$/];
 const ONNX_EXCLUDE = [/training/];
 
 const PIPER_FILES = ['piper_phonemize.js', 'piper_phonemize.wasm', 'piper_phonemize.data'];
+
+/**
+ * Bergamot's worker is a *classic* worker: it calls
+ * `importScripts('bergamot-translator-worker.js')` and fetches its `.wasm` as a
+ * sibling of itself. Vite bundles the worker into `dist/assets/` with a hashed
+ * name, so these two have to land in that same directory or both lookups break.
+ * `public/` is copied to the dist root, which is why they go to public/assets/.
+ *
+ * The library's documented `workerUrl` option would have avoided this, but in
+ * 0.4.9 it is never read — the worker path is hardcoded.
+ */
+const BERGAMOT_FILES = ['bergamot-translator-worker.js', 'bergamot-translator-worker.wasm'];
 
 async function exists(path) {
   try {
@@ -72,7 +85,22 @@ async function copyPhonemizer() {
   return PIPER_FILES.length;
 }
 
+async function copyBergamotRuntime() {
+  const source = join(packageDir('@browsermt/bergamot-translator', root), 'worker');
+  const target = join(root, 'public', 'assets');
+  await mkdir(target, { recursive: true });
+
+  for (const name of BERGAMOT_FILES) {
+    const from = join(source, name);
+    if (!(await exists(from))) throw new Error(`Missing Bergamot asset ${from}`);
+    await cp(from, join(target, name));
+  }
+  return BERGAMOT_FILES.length;
+}
+
 const onnx = await copyOnnxRuntime();
 const piper = await copyPhonemizer();
+const bergamot = await copyBergamotRuntime();
 console.log(`[assets] ONNX Runtime: ${onnx} file(s) -> public/tts/onnx/`);
 console.log(`[assets] Phonemizer:   ${piper} file(s) -> public/tts/piper/`);
+console.log(`[assets] Bergamot:     ${bergamot} file(s) -> public/assets/`);

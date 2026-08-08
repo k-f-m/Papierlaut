@@ -25,11 +25,27 @@ COPY voices.catalog.json ./
 COPY scripts/fetch-voices.mjs ./scripts/
 RUN node scripts/fetch-voices.mjs
 
+# --- Translation models -------------------------------------------------------
+# Separated for the same reason as the voices: ~71 MB of weights that must not be
+# re-downloaded because application code changed. Every file is checked against
+# the sha256 published alongside it, so a corrupt download fails the build.
+FROM deps AS translation
+WORKDIR /app
+ARG TRANSLATION_PAIRS
+ENV TRANSLATION_PAIRS=${TRANSLATION_PAIRS}
+COPY translation.catalog.json ./
+COPY scripts/fetch-translation-models.mjs ./scripts/
+RUN node scripts/fetch-translation-models.mjs
+
 # --- Build --------------------------------------------------------------------
 FROM deps AS build
 WORKDIR /app
 COPY . .
 COPY --from=voices /app/public/tts/voices ./public/tts/voices
+# Always present: with TRANSLATION_PAIRS="" the stage still writes an empty
+# registry, so this copy succeeds and the app simply finds nothing to offer and
+# falls back to the browser's own translator.
+COPY --from=translation /app/public/mt ./public/mt
 RUN npm run build
 
 # --- Test ---------------------------------------------------------------------

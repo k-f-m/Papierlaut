@@ -16,6 +16,10 @@ services:
         # model is roughly 63 MB. Set to "" to build without neural voices and
         # rely on the operating system's own.
         PIPER_VOICES: ${PIPER_VOICES-de_DE-thorsten-medium,en_US-lessac-medium}
+        # Comma-separated pair ids from translation.catalog.json. Each pair is
+        # roughly 36 MB. Set to "" to build without bundled translation and fall
+        # back to whatever the browser itself offers.
+        TRANSLATION_PAIRS: ${TRANSLATION_PAIRS-de-en,en-de}
     ports:
       - '${PORT:-8080}:8080'
     restart: unless-stopped
@@ -31,6 +35,7 @@ services:
     command: sh -c "npm run assets && npm run dev -- --host 0.0.0.0"
     environment:
       PIPER_VOICES: ${PIPER_VOICES-de_DE-thorsten-medium,en_US-lessac-medium}
+      TRANSLATION_PAIRS: ${TRANSLATION_PAIRS-de-en,en-de}
     ports:
       - '${DEV_PORT:-5173}:5173'
     volumes:

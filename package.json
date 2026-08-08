@@ -11,7 +11,8 @@
   "scripts": {
     "assets:runtime": "node scripts/collect-runtime-assets.mjs",
     "assets:voices": "node scripts/fetch-voices.mjs",
-    "assets": "npm run assets:runtime && npm run assets:voices",
+    "assets:translation": "node scripts/fetch-translation-models.mjs",
+    "assets": "npm run assets:runtime && npm run assets:voices && npm run assets:translation",
     "dev": "vite",
     "build": "npm run assets:runtime && vite build",
     "preview": "vite preview",
@@ -20,6 +21,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@browsermt/bergamot-translator": "^0.4.9",
     "dompurify": "^3.4.13",
     "mammoth": "^1.12.0",
     "marked": "^18.0.7",

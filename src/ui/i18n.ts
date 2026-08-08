@@ -23,6 +23,7 @@ const en = {
   'toolbar.speed': 'Speed',
   'toolbar.volume': 'Volume',
   'toolbar.follow': 'Follow along',
+  'toolbar.translate': 'Translation',
   'toolbar.close': 'Close document',
   'toolbar.uiLanguage': 'Interface language',
 
@@ -48,6 +49,7 @@ const en = {
   'error.parse': 'Could not open {name}. The file may be damaged.',
   'error.empty': '{name} contains no readable text.',
   'error.speech': 'Playback failed: {message}',
+  'error.translation': 'Translation failed: {message}',
   'error.noVoices':
     'No local voice is available. Build the image with a neural voice, or install a system voice in your operating system.',
   'error.dismiss': 'Dismiss',
@@ -84,6 +86,7 @@ const de: Record<MessageKey, string> = {
   'toolbar.speed': 'Tempo',
   'toolbar.volume': 'Lautstärke',
   'toolbar.follow': 'Mitlaufen',
+  'toolbar.translate': 'Übersetzung',
   'toolbar.close': 'Dokument schließen',
   'toolbar.uiLanguage': 'Sprache der Oberfläche',
 
@@ -109,6 +112,7 @@ const de: Record<MessageKey, string> = {
   'error.parse': '{name} konnte nicht geöffnet werden. Die Datei ist möglicherweise beschädigt.',
   'error.empty': '{name} enthält keinen lesbaren Text.',
   'error.speech': 'Wiedergabe fehlgeschlagen: {message}',
+  'error.translation': 'Übersetzung fehlgeschlagen: {message}',
   'error.noVoices':
     'Es ist keine lokale Stimme verfügbar. Bauen Sie das Image mit einer neuronalen Stimme, oder installieren Sie eine Systemstimme in Ihrem Betriebssystem.',
   'error.dismiss': 'Schließen',

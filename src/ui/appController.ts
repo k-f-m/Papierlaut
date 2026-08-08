@@ -7,11 +7,13 @@ import { applyTranslations, createTranslator } from './i18n.ts';
 import { chooseVoice } from '../speech/voiceSelection.ts';
 import { element, isEditingContext, setHidden } from './dom.ts';
 import { sanitizeDocumentHtml } from '../documents/sanitize.ts';
+import { TranslationSession } from '../translation/translationSession.ts';
 import type { DocumentParserRegistry } from '../documents/parserRegistry.ts';
 import type { ReadingModel } from '../reading/types.ts';
 import type { PlaybackState, SessionSnapshot } from '../app/readingSession.ts';
 import type { SettingsStore } from './settings.ts';
 import type { SpeechEngine, Voice } from '../speech/types.ts';
+import type { LanguagePair, TranslationEngine } from '../translation/types.ts';
 import type { MessageKey, Translate, UiLocale } from './i18n.ts';
 
 const STATUS_KEYS: Record<PlaybackState, MessageKey> = {
@@ -27,6 +29,11 @@ export interface AppDependencies {
   /** In preference order; the first engine offering a matching voice wins. */
   readonly engines: readonly SpeechEngine[];
   readonly settings: SettingsStore;
+  /**
+   * Optional: without one the translation control never appears, which is how
+   * the feature stays invisible until a browser can actually run a model.
+   */
+  readonly translation?: TranslationEngine;
 }
 
 const RATE_STEP = 0.05;
@@ -56,6 +63,8 @@ export class AppController {
     rateValue: element<HTMLOutputElement>('rate-value'),
     volume: element<HTMLInputElement>('volume'),
     follow: element<HTMLInputElement>('follow'),
+    translate: element<HTMLInputElement>('translate'),
+    translateField: element<HTMLElement>('translate-field'),
     status: element<HTMLElement>('status'),
     position: element<HTMLElement>('position'),
     progress: element<HTMLElement>('progress'),
@@ -69,6 +78,7 @@ export class AppController {
   #t: Translate;
   #highlighter: Highlighter;
   #session: ReadingSession | undefined;
+  #translation: TranslationSession | undefined;
   #model: ReadingModel | undefined;
   #voices: Voice[] = [];
   #voice: Voice | undefined;
@@ -90,6 +100,7 @@ export class AppController {
     this.#ui.rate.value = String(settings.rate);
     this.#ui.volume.value = String(settings.volume);
     this.#ui.follow.checked = settings.follow;
+    this.#ui.translate.checked = settings.translate;
     this.#ui.uiLanguage.value = settings.uiLocale;
     this.#applyLocale(settings.uiLocale);
     this.#renderRate(settings.rate);
@@ -219,6 +230,8 @@ export class AppController {
         await this.#prepareVoice(voice);
       }
 
+      await this.#prepareTranslation(model);
+
       this.#renderSnapshot(this.#session?.snapshot);
       this.#ui.article.focus({ preventScroll: true });
     } catch (error) {
@@ -254,9 +267,63 @@ export class AppController {
     );
   }
 
+  // --- Translation ---------------------------------------------------------
+
+  /**
+   * Offers translation only when an engine is present and can actually handle
+   * this document's pair. The target is simply the other supported language:
+   * a German document is offered in English and the reverse.
+   */
+  async #prepareTranslation(model: ReadingModel): Promise<void> {
+    const engine = this.#deps.translation;
+    if (!engine) return;
+
+    const pair: LanguagePair = {
+      from: model.language,
+      to: model.language === 'de' ? 'en' : 'de',
+    };
+
+    let available = false;
+    try {
+      available = await engine.isAvailable(pair);
+    } catch {
+      available = false;
+    }
+    if (!available) return;
+
+    this.#translation = new TranslationSession({ engine, pair, sentences: model.sentences });
+    setHidden(this.#ui.translateField, false);
+
+    if (this.#deps.settings.load().translate) await this.#applyTranslation(true);
+  }
+
+  /** Switches translation on or off, reporting a failure rather than hiding it. */
+  async #applyTranslation(enabled: boolean): Promise<void> {
+    const translation = this.#translation;
+    if (!translation) return;
+
+    if (!enabled) {
+      translation.disable();
+      this.#ui.translate.checked = false;
+      return;
+    }
+
+    try {
+      await translation.enable(this.#session?.snapshot.sentence ?? 0);
+      this.#ui.translate.checked = true;
+    } catch (error) {
+      this.#ui.translate.checked = false;
+      const message = error instanceof Error ? error.message : String(error);
+      this.#showError(this.#t('error.translation', { message }));
+    }
+  }
+
   #reset(): void {
     this.#session?.stop();
     this.#session = undefined;
+    this.#translation?.destroy();
+    this.#translation = undefined;
+    setHidden(this.#ui.translateField, true);
     this.#model = undefined;
     this.#highlighter.clear();
     this.#ui.article.replaceChildren();
@@ -343,6 +410,12 @@ export class AppController {
       const follow = this.#ui.follow.checked;
       this.#highlighter.setOptions({ follow });
       this.#deps.settings.save({ follow });
+    });
+
+    this.#ui.translate.addEventListener('change', () => {
+      const translate = this.#ui.translate.checked;
+      this.#deps.settings.save({ translate });
+      void this.#applyTranslation(translate);
     });
 
     this.#ui.voice.addEventListener('change', () => {
@@ -432,6 +505,10 @@ export class AppController {
   }
 
   #renderSnapshot(snapshot: SessionSnapshot | undefined): void {
+    // Keep the translated window ahead of the voice. Failures here are the
+    // engine's to report; the toggle already surfaced the first one.
+    if (snapshot) void this.#translation?.moveTo(snapshot.sentence).catch(() => {});
+
     const playing = snapshot?.state === 'playing';
     this.#ui.play.querySelector('.icon-play')?.toggleAttribute('hidden', playing);
     this.#ui.play.querySelector('.icon-pause')?.toggleAttribute('hidden', !playing);

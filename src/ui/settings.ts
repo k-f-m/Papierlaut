@@ -5,6 +5,8 @@ export interface Settings {
   rate: number;
   volume: number;
   follow: boolean;
+  /** Show an interlinear translation under each sentence. */
+  translate: boolean;
   uiLocale: UiLocale;
   /** Last voice the user chose, restored when it is still available. */
   voiceId: string | null;
@@ -19,7 +21,14 @@ export interface SettingsStore {
 const KEY = 'papierlaut.settings.v1';
 
 function defaults(): Settings {
-  return { rate: 1, volume: 1, follow: true, uiLocale: preferredUiLocale(), voiceId: null };
+  return {
+    rate: 1,
+    volume: 1,
+    follow: true,
+    translate: false,
+    uiLocale: preferredUiLocale(),
+    voiceId: null,
+  };
 }
 
 const RATE_RANGE = [0.5, 2] as const;
@@ -39,6 +48,7 @@ function coerce(raw: unknown): Settings {
         ? Math.min(Math.max(value.volume, 0), 1)
         : base.volume,
     follow: typeof value.follow === 'boolean' ? value.follow : base.follow,
+    translate: typeof value.translate === 'boolean' ? value.translate : base.translate,
     uiLocale: value.uiLocale === 'de' || value.uiLocale === 'en' ? value.uiLocale : base.uiLocale,
     voiceId: typeof value.voiceId === 'string' ? value.voiceId : null,
   };

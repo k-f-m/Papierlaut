@@ -6,6 +6,12 @@ import type { ReadingModel, SentenceToken, UtteranceWord, WordToken } from './ty
 
 export const WORD_CLASS = 'vl-w';
 export const SENTENCE_CLASS = 'vl-s';
+/**
+ * Marks a subtree the reader must not treat as document text. Applied to
+ * anything the app renders into the document itself — interlinear translations
+ * today — so it is never segmented, spoken, or clicked to start reading.
+ */
+export const NON_READABLE_CLASS = 'vl-skip';
 
 /**
  * Elements that start a new line of text. The reader treats the innermost of
@@ -24,6 +30,31 @@ function isBlockLevel(node: Node): node is Element {
   return node.nodeType === Node.ELEMENT_NODE && BLOCK_TAGS.has((node as Element).tagName.toLowerCase());
 }
 
+function isNonReadable(node: Node): boolean {
+  const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  return element?.closest(`.${NON_READABLE_CLASS}`) != null;
+}
+
+/**
+ * A node's text as the reader sees it, skipping non-readable subtrees. Stands in
+ * for `textContent` everywhere offsets are measured, so the string the segmenter
+ * works on and the text nodes that get wrapped stay in step.
+ */
+function readableText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return isNonReadable(node) ? '' : (node as Text).data;
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+  const element = node as Element;
+  if (isNonReadable(element)) return '';
+
+  const walker = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let text = '';
+  for (let child = walker.nextNode(); child !== null; child = walker.nextNode()) {
+    if (!isNonReadable(child)) text += (child as Text).data;
+  }
+  return text;
+}
+
 /**
  * `<div>lead-in<p>body</p></div>` puts text and a block side by side. Without a
  * wrapper the lead-in belongs to no paragraph and would be skipped, so it gets
@@ -38,7 +69,7 @@ function wrapStrayInlineContent(element: Element): void {
 
   const flush = (): void => {
     const first = run[0];
-    if (first && run.some((node) => (node.textContent ?? '').trim().length > 0)) {
+    if (first && run.some((node) => readableText(node).trim().length > 0)) {
       const wrapper = document.createElement('div');
       wrapper.className = ANONYMOUS_BLOCK_CLASS;
       first.before(wrapper);
@@ -62,7 +93,7 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
     wrapStrayInlineContent(element);
     const blockChildren = [...element.children].filter(isBlockLevel);
     if (blockChildren.length === 0) {
-      if ((element.textContent ?? '').trim().length > 0) blocks.push(element as HTMLElement);
+      if (readableText(element).trim().length > 0) blocks.push(element as HTMLElement);
       return;
     }
     for (const child of blockChildren) visit(child);
@@ -101,6 +132,9 @@ function wrapBlock(
   let offset = 0;
   for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
     const text = node as Text;
+    // Skipped before the offset advances, so non-readable text occupies no
+    // space in the string the spans are measured against.
+    if (isNonReadable(text)) continue;
     const end = offset + text.data.length;
     if (text.data.length > 0) textNodes.push({ node: text, start: offset, end });
     offset = end;
@@ -187,7 +221,7 @@ export function buildReadingModel(root: HTMLElement, language: SupportedLanguage
   let base = 0;
 
   blocks.forEach((block, blockIndex) => {
-    const blockText = block.textContent ?? '';
+    const blockText = readableText(block);
     const sentenceSpans = segmentSentences(blockText, locale);
     const wordSpans = segmentWords(blockText, locale);
     const wordsBySentence = groupWordsBySentence(sentenceSpans, wordSpans);

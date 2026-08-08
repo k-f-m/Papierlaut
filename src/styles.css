@@ -625,6 +625,43 @@ body {
   display: block;
 }
 
+/*
+ * Interlinear translations. A block-level span rather than a real block element:
+ * giving a paragraph a block child would change how the document divides into
+ * blocks the next time the reading model is built.
+ *
+ * Set in the interface font at a smaller size so the eye can tell translation
+ * from source without a rule or a colour that fights the reading surface.
+ */
+.vl-t {
+  display: block;
+  margin: 0.15em 0 0.5em;
+  font-family: var(--font-ui);
+  font-size: 0.8125em;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  hyphens: auto;
+  border-radius: 3px;
+  transition: background-color 160ms ease;
+}
+
+/*
+ * The translation picks up the tint of the sentence being spoken, at less than
+ * full strength so the source line stays the one the eye lands on. Adjacent
+ * sibling, because the view inserts the translation directly after the last
+ * span of its sentence — no second class to keep in sync.
+ */
+.vl-s.is-sentence + .vl-t {
+  background: color-mix(in oklab, var(--line-highlight) 55%, transparent);
+  box-shadow: 0 0 0 0.15em color-mix(in oklab, var(--line-highlight) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-t {
+    transition: none;
+  }
+}
+
 /* --- Toast ----------------------------------------------------------------- */
 
 .toast {

@@ -1,5 +1,8 @@
 import type { SupportedLanguage } from '../reading/detectLanguage.ts';
 import type { UtteranceWord } from '../reading/types.ts';
+import type { LoadProgress } from '../types/progress.ts';
+
+export type { LoadProgress };
 
 export type EngineId = 'piper' | 'system';
 
@@ -40,11 +43,6 @@ export interface Utterance {
   cancel(): void;
   /** Applies a new rate mid-utterance. Returns false if the engine cannot. */
   setRate(rate: number): boolean;
-}
-
-export interface LoadProgress {
-  readonly loaded: number;
-  readonly total: number;
 }
 
 export interface SpeechEngine {

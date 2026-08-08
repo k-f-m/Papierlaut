@@ -57,6 +57,18 @@
   box-sizing: border-box;
 }
 
+/*
+ * `hidden` is only honoured by the user-agent rule `[hidden] { display: none }`,
+ * and any author rule setting `display` beats the user agent regardless of
+ * specificity. Several controls here are flex or inline-flex, which silently
+ * defeated the attribute and left the dropzone, the reader and the close button
+ * on screen together. `!important` is the fix rather than a smell: it is what
+ * makes the attribute mean what every `setHidden` call already assumes.
+ */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100dvh;

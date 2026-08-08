@@ -30,10 +30,29 @@ export interface AppDependencies {
   readonly engines: readonly SpeechEngine[];
   readonly settings: SettingsStore;
   /**
-   * Optional: without one the translation control never appears, which is how
-   * the feature stays invisible until a browser can actually run a model.
+   * In preference order, like `engines`: the first that can handle the
+   * document's pair wins. Empty means the translation control never appears.
    */
-  readonly translation?: TranslationEngine;
+  readonly translators?: readonly TranslationEngine[];
+}
+
+/**
+ * The first engine that can handle the pair. Order is preference: the bundled
+ * models come before the browser's own, because only the bundled ones are
+ * served from this origin and covered by the app's own policy.
+ */
+async function firstAvailable(
+  engines: readonly TranslationEngine[],
+  pair: LanguagePair,
+): Promise<TranslationEngine | undefined> {
+  for (const engine of engines) {
+    try {
+      if (await engine.isAvailable(pair)) return engine;
+    } catch {
+      // An engine that cannot answer is an engine that cannot translate.
+    }
+  }
+  return undefined;
 }
 
 const RATE_STEP = 0.05;
@@ -275,21 +294,16 @@ export class AppController {
    * a German document is offered in English and the reverse.
    */
   async #prepareTranslation(model: ReadingModel): Promise<void> {
-    const engine = this.#deps.translation;
-    if (!engine) return;
+    const candidates = this.#deps.translators ?? [];
+    if (candidates.length === 0) return;
 
     const pair: LanguagePair = {
       from: model.language,
       to: model.language === 'de' ? 'en' : 'de',
     };
 
-    let available = false;
-    try {
-      available = await engine.isAvailable(pair);
-    } catch {
-      available = false;
-    }
-    if (!available) return;
+    const engine = await firstAvailable(candidates, pair);
+    if (!engine) return;
 
     this.#translation = new TranslationSession({ engine, pair, sentences: model.sentences });
     setHidden(this.#ui.translateField, false);

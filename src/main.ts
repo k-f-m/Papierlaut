@@ -9,6 +9,7 @@ import { MarkdownParser } from './documents/markdownParser.ts';
 import { PiperEngine } from './speech/piperEngine.ts';
 import { PlainTextParser } from './documents/plainTextParser.ts';
 import { SystemVoiceEngine } from './speech/systemVoiceEngine.ts';
+import { BergamotTranslator } from './translation/bergamotTranslator.ts';
 import { BuiltInTranslator } from './translation/builtInTranslator.ts';
 
 /**
@@ -17,8 +18,11 @@ import { BuiltInTranslator } from './translation/builtInTranslator.ts';
  * are the reason this reader exists; the system voices are the fallback when no
  * model was built into the image.
  *
- * The translator is offered only where the browser has one: `BuiltInTranslator`
- * reports itself unavailable everywhere else, and the control stays hidden.
+ * Translators are in preference order too. Bergamot comes first because its
+ * models ship inside the image and are served from this origin, so the offline
+ * claim is enforced by the same CSP as everything else; the browser's built-in
+ * translator is the fallback for images built without models. If neither can
+ * handle the document, the control never appears.
  */
 const controller = new AppController({
   parsers: new DocumentParserRegistry([
@@ -29,7 +33,17 @@ const controller = new AppController({
   ]),
   engines: [new PiperEngine(), new SystemVoiceEngine()],
   settings: new LocalSettingsStore(),
-  translation: new BuiltInTranslator(),
+  translators: [
+    new BergamotTranslator({
+      // Imported only if a translation is actually asked for, so a reader that
+      // never translates never downloads the library.
+      createTranslator: async (registryUrl) => {
+        const { BatchTranslator } = await import('@browsermt/bergamot-translator');
+        return new BatchTranslator({ registryUrl });
+      },
+    }),
+    new BuiltInTranslator(),
+  ],
 });
 
 void controller.start();

@@ -4,9 +4,11 @@ Drop a `.docx`, `.md`, `.html` or `.txt` file into the browser and it is read
 aloud in a natural German or English voice, with the current line and the current
 word highlighted as the voice moves through the text.
 
+It can also put a translation under each sentence, in the other language.
+
 **No part of the document leaves the machine.** There is no upload, no API call
-and no telemetry. Speech is synthesised in the tab, by a neural model that ships
-with the container.
+and no telemetry. Both the speech and the translation are produced in the tab,
+by neural models that ship with the container.
 
 ![The app waiting for a document, with the Offline badge in the header, the
 keyboard shortcuts listed below the drop zone, and the playback toolbar showing
@@ -50,6 +52,19 @@ Available: `de_DE-thorsten-medium`, `de_DE-kerstin-low`, `de_DE-eva_k-x_low`,
 neural voices and falls back to whatever offline voices the operating system
 provides.
 
+### Choosing translation models
+
+Translation models are declared in
+[`translation.catalog.json`](translation.catalog.json) and selected the same way:
+
+```bash
+TRANSLATION_PAIRS=de-en docker compose up --build app
+```
+
+Available: `de-en`, `en-de`. Each is roughly 35 MB. `TRANSLATION_PAIRS=""` builds
+without them, and translation then falls back to the browser's own on-device
+translator where one exists — see the caveat below for why that is second choice.
+
 ---
 
 ## Using it
@@ -64,9 +79,10 @@ Drop a file anywhere on the window, or click **Choose file**.
 | `Esc`                | Stop                                       |
 | Click any word       | Start reading from there                   |
 
-Where the browser provides an on-device translator, a **Translation** switch
-appears in the toolbar and puts an English rendering under each German sentence,
-or the reverse. See the caveat below before relying on it.
+A **Translation** switch in the toolbar puts an English rendering under each
+German sentence, or the reverse. It appears only when a model for the document's
+language is available, and translates just ahead of where you are reading rather
+than the whole document at once.
 
 The language is detected from the document and the matching voice is selected
 automatically; both can be overridden in the toolbar. The interface itself is
@@ -78,11 +94,17 @@ available in German and English.
 
 Three independent mechanisms, so that no single mistake can break it:
 
-**1. The synthesiser is local.** Piper (a VITS neural model) runs through ONNX
+**1. The models are local.** Piper (a VITS neural model) runs through ONNX
 Runtime on WebAssembly, inside the tab. Model weights, the espeak-ng phonemiser
 and the runtime binaries are baked into the image and served from the app's own
 origin — the app talks to ONNX Runtime directly, so every URL it requests is one
 it constructs itself under `/tts/`.
+
+Translation works the same way. Mozilla's Bergamot models are downloaded at
+image-build time, verified against the sha256 published with them, and served
+from `/mt/`. The library is pointed at that registry instead of its own default
+remote bucket, which is what turns a model load into an ordinary same-origin
+request ([`src/translation/bergamotTranslator.ts`](src/translation/bergamotTranslator.ts)).
 
 **2. The browser is told to block outbound connections.** nginx serves a
 `Content-Security-Policy` with `connect-src 'self'` and `default-src 'self'`
@@ -109,23 +131,22 @@ So the app filters the list to voices reporting `localService === true`
 voices are never offered, whatever they sound like. The neural voices are the
 answer to wanting both quality and privacy.
 
-### The same caveat applies to the built-in translator
+### The browser's own translator is the fallback, not the default
 
-The interlinear translation is produced by the browser's own Translator API,
-which is designed to run on-device — the sentences are not sent to a vendor. But
-it carries the same trap as the Web Speech API, and for the same reason: the
-model belongs to the browser, not to this page, so nothing about it passes
-through the page's network stack and **CSP can neither block nor vouch for it**.
-Unlike Piper, this app does not ship the model and cannot verify what it does.
+Two engines implement the same interface, and the order matters. The bundled
+Bergamot models come first, because they are covered by everything above: served
+from this origin, enforced by the CSP, verifiable by looking in the image.
 
-Two consequences worth stating plainly. The control appears only in browsers
-that ship the API, so most visitors will never see it. And the first use
-downloads a language pack, which means a cold start is not fully offline until
-that pack is cached — the one place where this feature is weaker than the
-voices, which are baked into the image.
+Chrome's built-in Translator API is used only when the image was built without
+models. It runs on-device too, but the guarantee is weaker in kind rather than in
+degree: **the model belongs to the browser, not to this page**, so nothing about
+it passes through the page's network stack and CSP can neither block nor vouch
+for it. Its first use also downloads a language pack, so a cold start is not
+fully offline until that pack is cached.
 
-Translation is off by default, and a bundled model fetched at build time like
-the voices would close the gap.
+That is the same trap as the "… Online" voices above — a component the page
+cannot see, doing something the page cannot police. Build with models and it
+never arises.
 
 ### One console message that is expected
 
@@ -144,9 +165,10 @@ breaks Firefox.
 
 ### Verifying it yourself
 
-Open DevTools → Network, tick *Disable cache*, read a document. After the
-initial page and model load there is no further request. Or simply disconnect
-the network: everything keeps working.
+Open DevTools → Network, tick *Disable cache*, read a document and switch
+translation on. Every request is to this origin, and after the initial page and
+model loads there are none at all. Or simply disconnect the network: reading and
+translating both keep working.
 
 ---
 
@@ -187,6 +209,7 @@ src/
   reading/     segmentation, language detection, the word/sentence DOM model
   speech/      the engine interface, Piper, Web Speech, timing
   app/         the reading session — the playback state machine
+  translation/ engine interface, Bergamot, the browser's own, interlinear view
   ui/          controller, i18n, settings
 scripts/       build-time asset collection and voice download
 docker/        nginx config and security headers

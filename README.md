@@ -10,9 +10,9 @@ It can also put a translation under each sentence, in the other language.
 and no telemetry. Both the speech and the translation are produced in the tab,
 by neural models that ship with the container.
 
-![The app waiting for a document, with the Offline badge in the header, the
-keyboard shortcuts listed below the drop zone, and the playback toolbar showing
-a local neural voice](docs/screenshot.png)
+![A German article being read aloud: the sentence in progress is tinted, the
+word being spoken is highlighted within it, and an English translation sits
+under each sentence](docs/screenshot.png)
 
 ---
 

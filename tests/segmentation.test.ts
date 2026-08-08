@@ -66,3 +66,37 @@ describe('segmentSentences', () => {
     expect(segmentSentences('   \n  ', 'en-US')).toEqual([]);
   });
 });
+
+describe('segmentSentences with source line breaks', () => {
+  it('does not end a sentence at a line break in the source', () => {
+    // HTML is hard-wrapped all the time; the line break carries no meaning.
+    // Intl.Segmenter disagrees — UAX #29 SB4 makes a line feed terminate a
+    // sentence regardless of punctuation — so the text must be normalised.
+    const text = 'Hier wird die Donau\naufgestaut. Ein Teil bleibt im Flussbett.';
+
+    expect(segmentSentences(text, 'de-DE').map((span) => span.text)).toEqual([
+      'Hier wird die Donau aufgestaut.',
+      'Ein Teil bleibt im Flussbett.',
+    ]);
+  });
+
+  it('keeps offsets pointing into the string it was given', () => {
+    const text = 'Erste Zeile\nzweite Zeile. Zweiter Satz.';
+    const [first] = segmentSentences(text, 'de-DE');
+
+    expect(first?.start).toBe(0);
+    expect(first?.end).toBe('Erste Zeile\nzweite Zeile.'.length);
+  });
+});
+
+describe('segmentSentences with Windows line endings', () => {
+  it('keeps offsets exact across CRLF', () => {
+    // \r\n is two characters: collapsing it to one space would shift every
+    // offset after it and misplace the highlight.
+    const text = 'Erste Zeile\r\nzweite Zeile. Zweiter Satz.';
+    const spans = segmentSentences(text, 'de-DE');
+
+    expect(spans[0]?.end).toBe('Erste Zeile\r\nzweite Zeile.'.length);
+    expect(text.slice(spans[1]?.start, spans[1]?.end)).toBe('Zweiter Satz.');
+  });
+});

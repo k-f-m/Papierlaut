@@ -54,20 +54,30 @@ export function segmentWords(text: string, locale: string): TextSpan[] {
 export function segmentSentences(text: string, locale: string): TextSpan[] {
   const segmenter = segmenterFor(locale, 'sentence');
   const spans: TextSpan[] = [];
+  // UAX #29 rule SB4 ends a sentence at any line feed, whatever the punctuation
+  // says. HTML and Markdown sources are hard-wrapped constantly and the break
+  // carries no meaning there, so it is flattened to a space first. Substituting
+  // rather than removing keeps every offset pointing at the caller's string.
+  const flat = flattenLineBreaks(text);
 
   if (segmenter) {
-    for (const segment of segmenter.segment(text)) {
-      const span = trimSpan(text, segment.index, segment.index + segment.segment.length);
+    for (const segment of segmenter.segment(flat)) {
+      const span = trimSpan(flat, segment.index, segment.index + segment.segment.length);
       if (span) spans.push(span);
     }
   } else {
-    for (const span of fallbackSentences(text)) spans.push(span);
+    for (const span of fallbackSentences(flat)) spans.push(span);
   }
 
   // A whole paragraph as one segment is common in Markdown and in Word
   // documents without hard stops. Reading it as a single utterance costs the
   // listener their place, so long segments are split at clause boundaries.
-  return spans.flatMap((span) => splitOverlongSpan(text, span));
+  return spans.flatMap((span) => splitOverlongSpan(flat, span));
+}
+
+/** Line breaks become spaces, one for one, so string offsets are unaffected. */
+function flattenLineBreaks(text: string): string {
+  return text.replaceAll(/[\r\n]/g, ' ');
 }
 
 /** Above this, a sentence is uncomfortable to re-listen to and slow to synthesise. */

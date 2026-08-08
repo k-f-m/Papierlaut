@@ -9,12 +9,16 @@ import { MarkdownParser } from './documents/markdownParser.ts';
 import { PiperEngine } from './speech/piperEngine.ts';
 import { PlainTextParser } from './documents/plainTextParser.ts';
 import { SystemVoiceEngine } from './speech/systemVoiceEngine.ts';
+import { BuiltInTranslator } from './translation/builtInTranslator.ts';
 
 /**
  * Composition root: the only place that knows every concrete implementation.
  * Engine order is preference order — the neural voices come first because they
  * are the reason this reader exists; the system voices are the fallback when no
  * model was built into the image.
+ *
+ * The translator is offered only where the browser has one: `BuiltInTranslator`
+ * reports itself unavailable everywhere else, and the control stays hidden.
  */
 const controller = new AppController({
   parsers: new DocumentParserRegistry([
@@ -25,6 +29,7 @@ const controller = new AppController({
   ]),
   engines: [new PiperEngine(), new SystemVoiceEngine()],
   settings: new LocalSettingsStore(),
+  translation: new BuiltInTranslator(),
 });
 
 void controller.start();

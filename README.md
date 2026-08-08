@@ -64,6 +64,10 @@ Drop a file anywhere on the window, or click **Choose file**.
 | `Esc`                | Stop                                       |
 | Click any word       | Start reading from there                   |
 
+Where the browser provides an on-device translator, a **Translation** switch
+appears in the toolbar and puts an English rendering under each German sentence,
+or the reverse. See the caveat below before relying on it.
+
 The language is detected from the document and the matching voice is selected
 automatically; both can be overridden in the toolbar. The interface itself is
 available in German and English.
@@ -104,6 +108,24 @@ So the app filters the list to voices reporting `localService === true`
 ([`src/speech/systemVoiceEngine.ts`](src/speech/systemVoiceEngine.ts)). Network
 voices are never offered, whatever they sound like. The neural voices are the
 answer to wanting both quality and privacy.
+
+### The same caveat applies to the built-in translator
+
+The interlinear translation is produced by the browser's own Translator API,
+which is designed to run on-device — the sentences are not sent to a vendor. But
+it carries the same trap as the Web Speech API, and for the same reason: the
+model belongs to the browser, not to this page, so nothing about it passes
+through the page's network stack and **CSP can neither block nor vouch for it**.
+Unlike Piper, this app does not ship the model and cannot verify what it does.
+
+Two consequences worth stating plainly. The control appears only in browsers
+that ship the API, so most visitors will never see it. And the first use
+downloads a language pack, which means a cold start is not fully offline until
+that pack is cached — the one place where this feature is weaker than the
+voices, which are baked into the image.
+
+Translation is off by default, and a bundled model fetched at build time like
+the voices would close the gap.
 
 ### One console message that is expected
 

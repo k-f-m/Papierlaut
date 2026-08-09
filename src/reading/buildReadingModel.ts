@@ -85,8 +85,27 @@ function wrapStrayInlineContent(element: Element): void {
   flush();
 }
 
+/**
+ * A document can arrive as text and inline tags only — plenty of saved pages do
+ * once their layout wrappers are sanitised away. Left alone, the reading surface
+ * itself becomes the block and every span becomes its direct child, where the
+ * reading measure cannot reach the text: it is set on `.document > *`, and
+ * `max-width` has no effect on a non-replaced inline element. One anonymous
+ * block restores the column.
+ */
+function ensureBlockStructure(root: HTMLElement): void {
+  if ([...root.children].some(isBlockLevel)) return;
+  if (readableText(root).trim().length === 0) return;
+
+  const wrapper = root.ownerDocument.createElement('div');
+  wrapper.className = ANONYMOUS_BLOCK_CLASS;
+  wrapper.append(...root.childNodes);
+  root.append(wrapper);
+}
+
 /** Innermost block elements, in reading order. */
 function collectBlocks(root: HTMLElement): HTMLElement[] {
+  ensureBlockStructure(root);
   const blocks: HTMLElement[] = [];
 
   const visit = (element: Element): void => {

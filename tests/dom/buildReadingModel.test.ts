@@ -116,3 +116,35 @@ describe('buildReadingModel', () => {
     expect(model.sentences.map((sentence) => sentence.text)).toEqual(['Links.', 'Rechts.']);
   });
 });
+
+describe('documents with no block markup', () => {
+  it('wraps bare inline content in a block of its own', () => {
+    // A saved page can arrive as text and inline tags only. Without a block the
+    // reading surface itself becomes one, its spans become direct children, and
+    // the reading measure — set on `.document > *` — stops reaching the text.
+    const root = render('Ein Satz. <b>Noch</b> einer.');
+    const model = buildReadingModel(root, 'de');
+
+    expect(model.blocks).toHaveLength(1);
+    expect(model.blocks[0]).not.toBe(root);
+    expect(model.blocks[0]?.classList.contains('vl-anon-block')).toBe(true);
+  });
+
+  it('keeps every sentence inside that block rather than beside it', () => {
+    const root = render('Erster Satz. Zweiter Satz.');
+    const model = buildReadingModel(root, 'de');
+
+    for (const sentence of model.sentences) {
+      for (const element of sentence.elements) {
+        expect(element.parentElement).not.toBe(root);
+      }
+    }
+  });
+
+  it('leaves a document that already has blocks alone', () => {
+    const root = render('<p>Erster Satz.</p><p>Zweiter Satz.</p>');
+    const model = buildReadingModel(root, 'de');
+
+    expect(model.blocks.map((block) => block.tagName)).toEqual(['P', 'P']);
+  });
+});

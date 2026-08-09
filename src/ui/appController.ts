@@ -5,6 +5,7 @@ import { detectLanguage } from '../reading/detectLanguage.ts';
 import { Highlighter } from '../reading/highlighter.ts';
 import { applyTranslations, createTranslator } from './i18n.ts';
 import { chooseVoice } from '../speech/voiceSelection.ts';
+import { NOT_HTML_WARNING } from '../documents/htmlParser.ts';
 import { element, isEditingContext, setHidden } from './dom.ts';
 import { sanitizeDocumentHtml } from '../documents/sanitize.ts';
 import { TranslationSession } from '../translation/translationSession.ts';
@@ -241,6 +242,9 @@ export class AppController {
       setHidden(this.#ui.dropzone, true);
       setHidden(this.#ui.reader, false);
       setHidden(this.#ui.closeDocument, false);
+
+      // Shown before any error, so a genuine failure still wins the toast.
+      if (parsed.warnings.length > 0) this.#showNotice(parsed.warnings);
 
       if (!voice) {
         this.#showError(this.#t('error.noVoices'));
@@ -560,6 +564,22 @@ export class AppController {
   }
 
   #showError(message: string): void {
+    this.#showToast(message);
+  }
+
+  /**
+   * Non-fatal problems a parser reported. Warnings it raised itself arrive as
+   * message keys and are translated; anything a third-party parser produced
+   * (mammoth's, for instance) is already prose and is passed through as-is.
+   */
+  #showNotice(warnings: readonly string[]): void {
+    const text = warnings
+      .map((warning) => (warning === NOT_HTML_WARNING ? this.#t('warning.notHtml') : warning))
+      .join(' ');
+    if (text.length > 0) this.#showToast(text);
+  }
+
+  #showToast(message: string): void {
     this.#ui.toastMessage.textContent = message;
     setHidden(this.#ui.toast, false);
   }

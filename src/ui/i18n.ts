@@ -54,6 +54,8 @@ const en = {
     'No local voice is available. Build the image with a neural voice, or install a system voice in your operating system.',
   'error.dismiss': 'Dismiss',
 
+  'warning.notHtml': 'This file contains no HTML structure, so it was read as plain text.',
+
   'shortcuts.title': 'Keyboard',
   'shortcuts.playPause': 'Space — play or pause',
   'shortcuts.skip': '← → — previous or next sentence',
@@ -116,6 +118,9 @@ const de: Record<MessageKey, string> = {
   'error.noVoices':
     'Es ist keine lokale Stimme verfügbar. Bauen Sie das Image mit einer neuronalen Stimme, oder installieren Sie eine Systemstimme in Ihrem Betriebssystem.',
   'error.dismiss': 'Schließen',
+
+  'warning.notHtml':
+    'Diese Datei enthält keine HTML-Struktur und wurde deshalb als reiner Text gelesen.',
 
   'shortcuts.title': 'Tastatur',
   'shortcuts.playPause': 'Leertaste – vorlesen oder pausieren',

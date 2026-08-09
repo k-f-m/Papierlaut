@@ -7,6 +7,7 @@
  *   public/tts/onnx/    ONNX Runtime Web binaries  (ort.env.wasm.wasmPaths)
  *   public/tts/piper/   espeak-ng phonemizer       (piper_phonemize.*)
  *   public/assets/      Bergamot translator runtime (see below)
+ *   public/pdf/         pdf.js worker, cmaps and standard fonts
  *
  * Runs inside the container on every build; it is cheap and idempotent.
  */
@@ -40,6 +41,15 @@ const PIPER_FILES = ['piper_phonemize.js', 'piper_phonemize.wasm', 'piper_phonem
  * 0.4.9 it is never read — the worker path is hardcoded.
  */
 const BERGAMOT_FILES = ['bergamot-translator-worker.js', 'bergamot-translator-worker.wasm'];
+
+/**
+ * pdf.js reaches for a CDN when it needs a character map or a font it can fall
+ * back on. `connect-src 'self'` refuses that, so the data is served from here
+ * instead — otherwise a PDF using non-embedded or non-Latin fonts extracts as
+ * wrong text rather than failing visibly.
+ */
+const PDF_WORKER = 'pdf.worker.min.mjs';
+const PDF_DATA_DIRS = ['cmaps', 'standard_fonts'];
 
 async function exists(path) {
   try {
@@ -98,9 +108,27 @@ async function copyBergamotRuntime() {
   return BERGAMOT_FILES.length;
 }
 
+async function copyPdfRuntime() {
+  const source = packageDir('pdfjs-dist', root);
+  const target = join(root, 'public', 'pdf');
+  await rm(target, { recursive: true, force: true });
+  await mkdir(target, { recursive: true });
+
+  const worker = join(source, 'build', PDF_WORKER);
+  if (!(await exists(worker))) throw new Error(`Missing pdf.js worker ${worker}`);
+  await cp(worker, join(target, PDF_WORKER));
+
+  for (const name of PDF_DATA_DIRS) {
+    await cp(join(source, name), join(target, name), { recursive: true });
+  }
+  return PDF_DATA_DIRS.length + 1;
+}
+
 const onnx = await copyOnnxRuntime();
 const piper = await copyPhonemizer();
 const bergamot = await copyBergamotRuntime();
+const pdf = await copyPdfRuntime();
 console.log(`[assets] ONNX Runtime: ${onnx} file(s) -> public/tts/onnx/`);
 console.log(`[assets] Phonemizer:   ${piper} file(s) -> public/tts/piper/`);
 console.log(`[assets] Bergamot:     ${bergamot} file(s) -> public/assets/`);
+console.log(`[assets] pdf.js:       ${pdf} item(s) -> public/pdf/`);

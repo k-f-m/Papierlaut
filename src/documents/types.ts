@@ -33,6 +33,14 @@ export class UnsupportedFormatError extends Error {
   }
 }
 
+/** A PDF whose pages carry no text layer at all — a scan needing OCR. */
+export class NoTextLayerError extends Error {
+  constructor(readonly fileName: string) {
+    super(`No text layer in ${fileName}`);
+    this.name = 'NoTextLayerError';
+  }
+}
+
 export function fileExtension(name: string): string {
   const dot = name.lastIndexOf('.');
   return dot < 0 ? '' : name.slice(dot).toLowerCase();

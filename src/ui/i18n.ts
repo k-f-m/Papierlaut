@@ -11,7 +11,7 @@ const en = {
   'drop.headline': 'Drop a document here',
   'drop.hint': 'or choose a file — nothing is uploaded',
   'drop.button': 'Choose file',
-  'drop.formats': 'Word (.docx), Markdown (.md), HTML (.html), plain text (.txt)',
+  'drop.formats': 'PDF, Word (.docx), Markdown (.md), HTML (.html), plain text (.txt)',
   'drop.release': 'Release to open',
 
   'toolbar.play': 'Play',
@@ -52,6 +52,8 @@ const en = {
   'error.translation': 'Translation failed: {message}',
   'error.noVoices':
     'No local voice is available. Build the image with a neural voice, or install a system voice in your operating system.',
+  'error.noTextLayer':
+    '{name} contains no readable text. It is most likely a scan, and would need OCR first.',
   'error.dismiss': 'Dismiss',
 
   'warning.notHtml': 'This file contains no HTML structure, so it was read as plain text.',
@@ -76,7 +78,7 @@ const de: Record<MessageKey, string> = {
   'drop.headline': 'Dokument hierher ziehen',
   'drop.hint': 'oder Datei auswählen – es wird nichts hochgeladen',
   'drop.button': 'Datei auswählen',
-  'drop.formats': 'Word (.docx), Markdown (.md), HTML (.html), Text (.txt)',
+  'drop.formats': 'PDF, Word (.docx), Markdown (.md), HTML (.html), Text (.txt)',
   'drop.release': 'Loslassen zum Öffnen',
 
   'toolbar.play': 'Vorlesen',
@@ -117,6 +119,8 @@ const de: Record<MessageKey, string> = {
   'error.translation': 'Übersetzung fehlgeschlagen: {message}',
   'error.noVoices':
     'Es ist keine lokale Stimme verfügbar. Bauen Sie das Image mit einer neuronalen Stimme, oder installieren Sie eine Systemstimme in Ihrem Betriebssystem.',
+  'error.noTextLayer':
+    '{name} enthält keinen lesbaren Text. Vermutlich handelt es sich um einen Scan – dieser müsste zuerst per OCR erkannt werden.',
   'error.dismiss': 'Schließen',
 
   'warning.notHtml':

@@ -7,6 +7,7 @@ import { HtmlParser } from './documents/htmlParser.ts';
 import { LocalSettingsStore } from './ui/settings.ts';
 import { MarkdownParser } from './documents/markdownParser.ts';
 import { PiperEngine } from './speech/piperEngine.ts';
+import { PdfParser } from './documents/pdfParser.ts';
 import { PlainTextParser } from './documents/plainTextParser.ts';
 import { SystemVoiceEngine } from './speech/systemVoiceEngine.ts';
 import { BergamotTranslator } from './translation/bergamotTranslator.ts';
@@ -27,6 +28,7 @@ import { BuiltInTranslator } from './translation/builtInTranslator.ts';
 const controller = new AppController({
   parsers: new DocumentParserRegistry([
     new DocxParser(),
+    new PdfParser(),
     new MarkdownParser(),
     new HtmlParser(),
     new PlainTextParser(),

@@ -1,8 +1,8 @@
 # Papierlaut
 
-Drop a `.docx`, `.md`, `.html` or `.txt` file into the browser and it is read
-aloud in a natural German or English voice, with the current line and the current
-word highlighted as the voice moves through the text.
+Drop a `.pdf`, `.docx`, `.md`, `.html` or `.txt` file into the browser and it is
+read aloud in a natural German or English voice, with the current line and the
+current word highlighted as the voice moves through the text.
 
 It can also put a translation under each sentence, in the other language.
 
@@ -88,6 +88,25 @@ The language is detected from the document and the matching voice is selected
 automatically; both can be overridden in the toolbar. The interface itself is
 available in German and English.
 
+### What to expect from a PDF
+
+A PDF has no paragraphs — only glyphs with coordinates — so the reader
+reconstructs them from geometry: fragments sharing a baseline become a line,
+lines separated by more than the usual leading start a paragraph, and a word
+hyphenated across a line break is rejoined
+([`src/documents/pdfLayout.ts`](src/documents/pdfLayout.ts)). That last one
+matters more than it sounds: German typesetting hyphenates constantly, and
+`Tempera-` followed by `turmessung` is unintelligible read aloud.
+
+Only the text layer is used; nothing is rendered. A scanned PDF therefore
+contains no readable text at all, and the reader says so rather than opening an
+empty document — it would need OCR first.
+
+Three limits worth knowing. Two-column layouts are read across the columns
+rather than down them. Headings are not inferred, since a PDF does not mark
+them. And running headers, footers and page numbers are read along with the
+text.
+
 ---
 
 ## How the privacy guarantee actually works
@@ -111,6 +130,11 @@ request ([`src/translation/bergamotTranslator.ts`](src/translation/bergamotTrans
 ([`docker/security-headers.conf`](docker/security-headers.conf)). A `fetch`,
 `XHR` or WebSocket to any other origin is refused by the browser before it is
 sent — including one smuggled in through a dropped file.
+
+PDFs are read by pdf.js, also in the tab. Its worker, character maps and
+fallback fonts are served from `/pdf/`, because the library reaches for a CDN
+when they are missing — a request `connect-src 'self'` refuses, which would
+leave a document extracting as wrong text rather than failing visibly.
 
 **3. Dropped markup is sanitised.** Every document goes through DOMPurify, and
 any attribute that could trigger a remote request (`src`, `srcset`,
@@ -205,7 +229,7 @@ across a document.
 
 ```
 src/
-  documents/   parsing (.docx, .md, .html, .txt) and sanitisation
+  documents/   parsing (.pdf, .docx, .md, .html, .txt) and sanitisation
   reading/     segmentation, language detection, the word/sentence DOM model
   speech/      the engine interface, Piper, Web Speech, timing
   app/         the reading session — the playback state machine

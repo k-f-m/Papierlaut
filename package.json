@@ -25,7 +25,8 @@
     "dompurify": "^3.4.13",
     "mammoth": "^1.12.0",
     "marked": "^18.0.7",
-    "onnxruntime-web": "1.18.0"
+    "onnxruntime-web": "1.18.0",
+    "pdfjs-dist": "^6.2.108"
   },
   "devDependencies": {
     "@diffusionstudio/piper-wasm": "1.0.0",

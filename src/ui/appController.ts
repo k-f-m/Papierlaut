@@ -1,5 +1,5 @@
 import { ReadingSession } from '../app/readingSession.ts';
-import { UnsupportedFormatError } from '../documents/types.ts';
+import { NoTextLayerError, UnsupportedFormatError } from '../documents/types.ts';
 import { buildReadingModel } from '../reading/buildReadingModel.ts';
 import { detectLanguage } from '../reading/detectLanguage.ts';
 import { Highlighter } from '../reading/highlighter.ts';
@@ -258,7 +258,9 @@ export class AppController {
       this.#renderSnapshot(this.#session?.snapshot);
       this.#ui.article.focus({ preventScroll: true });
     } catch (error) {
-      if (error instanceof UnsupportedFormatError) {
+      if (error instanceof NoTextLayerError) {
+        this.#showError(this.#t('error.noTextLayer', { name: file.name }));
+      } else if (error instanceof UnsupportedFormatError) {
         this.#showError(
           this.#t('error.unsupported', {
             name: file.name,
